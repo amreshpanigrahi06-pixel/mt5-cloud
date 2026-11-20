@@ -16,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_URL="https://github.com/your-username/mt5-monitor.git"  # CHANGE THIS
+REPO_URL="https://github.com/amreshpanigrahi06-pixel/mt5-cloud.git"
 PROJECT_DIR="/opt/mt5-monitor"
 DOMAIN=""  # Will prompt
 EMAIL=""   # Will prompt
@@ -166,6 +166,14 @@ EOF
 
 chmod 600 "$PROJECT_DIR/server/.env"
 
+# Docker Compose reads this file from the deploy directory for interpolation.
+cat > "$PROJECT_DIR/deploy/.env" << EOF
+JWT_SECRET=$JWT_SECRET
+ENCRYPTION_KEY=$ENCRYPTION_KEY
+CORS_ORIGIN=https://$DOMAIN
+EOF
+chmod 600 "$PROJECT_DIR/deploy/.env"
+
 # Update nginx config with domain
 sed -i "s/your-domain.com/$DOMAIN/g" "$PROJECT_DIR/deploy/nginx.conf"
 
@@ -178,11 +186,17 @@ echo -e "\n${BLUE}[6/8] Obtaining SSL certificate from Let's Encrypt...${NC}"
 systemctl stop nginx
 
 # Get certificate
+# Create certbot directories used by Docker Compose.
+mkdir -p "$PROJECT_DIR/deploy/certbot/conf" "$PROJECT_DIR/deploy/certbot/www"
+
 certbot certonly --standalone \
     --non-interactive \
     --agree-tos \
     --email "$EMAIL" \
     -d "$DOMAIN" \
+    --config-dir "$PROJECT_DIR/deploy/certbot/conf" \
+    --work-dir "$PROJECT_DIR/deploy/certbot/work" \
+    --logs-dir "$PROJECT_DIR/deploy/certbot/logs" \
     --preferred-challenges http
 
 # Create renewal hook

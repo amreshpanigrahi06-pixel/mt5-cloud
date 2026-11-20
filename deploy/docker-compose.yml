@@ -18,6 +18,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - CORS_ORIGIN=${CORS_ORIGIN:-https://your-domain.com}
+    env_file:
+      - ../server/.env
     volumes:
       - mt5_data:/app/data
     networks:
