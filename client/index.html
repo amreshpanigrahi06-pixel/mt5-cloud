@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MT5 Monitor Dashboard</title>
+  <style>
+    /* ===== CSS Variables ===== */
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #21262d;
+      --border-color: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-red: #f85149;
+      --accent-yellow: #d29922;
+      --accent-purple: #a371f7;
+      --shadow: 0 4px 12px rgba(0,0,0,0.4);
+      --radius: 8px;
+      --transition: all 0.2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ===== Login Page ===== */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: var(--shadow);
+    }
+
+    .login-header { text-align: center; margin-bottom: 32px; }
+    .login-header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+    .login-header p { color: var(--text-secondary); font-size: 14px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: var(--transition);
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+    .form-group input::placeholder { color: var(--text-muted); }
+
+    .btn {
+      width: 100%;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #4a98e8; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover { background: #2d333b; }
+
+    .login-footer { text-align: center; margin-top: 24px; font-size: 13px; color: var(--text-secondary); }
+    .login-footer a { color: var(--accent-blue); text-decoration: none; }
+    .login-footer a:hover { text-decoration: underline; }
+
+    .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; display: none; }
+    .alert-error { background: rgba(248, 81, 73, 0.15); border: 1px solid var(--accent-red); color: var(--accent-red); }
+    .alert-success { background: rgba(63, 185, 80, 0.15); border: 1px solid var(--accent-green); color: var(--accent-green); }
+
+    /* ===== Dashboard Layout ===== */
+    .dashboard { display: none; flex-direction: column; min-height: 100vh; }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo { font-size: 20px; font-weight: 700; color: var(--accent-blue); }
+    .logo span { color: var(--accent-green); }
+    .account-selector {
+      position: relative;
+    }
+    .account-selector select {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 8px 36px 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .notification-btn {
+      position: relative;
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .notification-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .notification-badge {
+      position: absolute;
+      top: -4px; right: -4px;
+      background: var(--accent-red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-menu { position: relative; }
+    .user-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: none; border: 1px solid var(--border-color);
+      border-radius: 6px; padding: 6px 12px;
+      color: var(--text-primary); cursor: pointer;
+    }
+    .user-btn:hover { background: var(--bg-tertiary); }
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-blue);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 12px;
+    }
+
+    /* Main Content */
+    .main { flex: 1; padding: 24px; display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1800px; margin: 0 auto; width: 100%; }
+
+    /* Stats Cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .stat-icon.balance { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+    .stat-icon.equity { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+    .stat-icon.profit { background: rgba(210, 153, 34, 0.15); color: var(--accent-yellow); }
+    .stat-icon.margin { background: rgba(163, 113, 247, 0.15); color: var(--accent-purple); }
+    .stat-info { flex: 1; }
+    .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: var(--radius); padding: 4px; border: 1px solid var(--border-color); }
+    .tab {
+      flex: 1; padding: 10px 16px; border: none; background: none;
+      color: var(--text-secondary); font-size: 13px; font-weight: 500;
+      border-radius: 6px; cursor: pointer; transition: var(--transition);
+    }
+    .tab:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+    .tab.active { background: var(--bg-primary); color: var(--accent-blue); }
+
+    /* Panels */
+    .panel { display: none; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; }
+    .panel.active { display: block; }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background: var(--bg-tertiary); font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; }
+    tr:hover td { background: var(--bg-tertiary); }
+    .symbol { font-weight: 600; font-family: monospace; }
+    .type-buy { color: var(--accent-green); }
+    .type-sell { color: var(--accent-red); }
+    .profit-positive { color: var(--accent-green); }
+    .profit-negative { color: var(--accent-red); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge-open { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+    .badge-closed { background: rgba(139, 148, 158, 0.15); color: var(--text-secondary); }
+    .badge-pending { background: rgba(210, 153, 34, 0.15); color: var(--accent-yellow); }
+
+    /* Empty State */
+    .empty-state { padding: 60px 20px; text-align: center; color: var(--text-secondary); }
+    .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state h3 { margin-bottom: 8px; color: var(--text-primary); }
+    .empty-state p { font-size: 14px; max-width: 300px; margin: 0 auto; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1000; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 18px; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; }
+
+    /* Account Form */
+    .account-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 480px) { .account-form .form-row { grid-template-columns: 1fr; } }
+
+    /* Notifications Dropdown */
+    .notifications-dropdown {
+      position: absolute; top: 100%; right: 0; margin-top: 8px;
+      width: 360px; background: var(--bg-secondary); border: 1px solid var(--border-color);
+      border-radius: var(--radius); box-shadow: var(--shadow); display: none; z-index: 200;
+    }
+    .notifications-dropdown.active { display: block; }
+    .notif-header { padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
+    .notif-list { max-height: 400px; overflow-y: auto; }
+    .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); }
+    .notif-item:hover { background: var(--bg-tertiary); }
+    .notif-item.unread { background: rgba(88, 166, 255, 0.05); }
+    .notif-title { font-weight: 500; margin-bottom: 4px; }
+    .notif-message { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .notif-time { font-size: 11px; color: var(--text-muted); }
+    .notif-footer { padding: 12px 16px; text-align: center; }
+    .notif-footer button { font-size: 13px; color: var(--accent-blue); background: none; border: none; cursor: pointer; }
+
+    /* Connection Status */
+    .connection-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .connection-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+    .connection-dot.connected { background: var(--accent-green); }
+    .connection-dot.connecting { background: var(--accent-yellow); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main { padding: 16px; }
+      .header { padding: 12px 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== Login Page ===== -->
+<div id="loginPage" class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>MT5 Monitor</h1>
+      <p>Sign in to view your trading accounts</p>
+    </div>
+    <div id="loginAlert" class="alert"></div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+    </form>
+    <div class="login-footer">
+      Don't have an account? <a href="#" id="showRegister">Create one</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Register Modal (shown after login page) ===== -->
+<div id="registerModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Create Account</h2>
+      <button class="modal-close" onclick="closeModal('registerModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="registerAlert" class="alert"></div>
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Password</label>
+          <input type="password" id="registerPassword" placeholder="Min 8 characters" required minlength="8">
+        </div>
+        <div class="form-group">
+          <label for="registerConfirm">Confirm Password</label>
+          <input type="password" id="registerConfirm" placeholder="••••••••" required>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('registerModal')">Cancel</button>
+      <button class="btn btn-primary" id="registerBtn">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Dashboard ===== -->
+<div id="dashboard" class="dashboard">
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">MT5<span>Monitor</span></div>
+      <div class="account-selector">
+        <select id="accountSelect" onchange="switchAccount()">
+          <option value="">Select Account</option>
+        </select>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="connection-status">
+        <span class="connection-dot" id="connectionDot"></span>
+        <span id="connectionText">Disconnected</span>
+      </div>
+      <div class="notification-btn" id="notifBtn" onclick="toggleNotifications()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notification-badge" id="notifBadge">0</span>
+      </div>
+      <div class="notifications-dropdown" id="notifDropdown"></div>
+      <div class="user-menu">
+        <button class="user-btn" id="userBtn">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span id="userEmail">User</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon balance">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Balance</div>
+          <div class="stat-value" id="statBalance">$0.00</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon equity">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Equity</div>
+          <div class="stat-value" id="statEquity">$0.00</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon profit">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Floating P/L</div>
+          <div class="stat-value" id="statProfit">$0.00</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon margin">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Margin Level</div>
+          <div class="stat-value" id="statMargin">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="positions">Open Positions</button>
+      <button class="tab" data-tab="history">Trade History</button>
+      <button class="tab" data-tab="accounts">Accounts</button>
+    </div>
+
+    <!-- Positions Panel -->
+    <div id="panel-positions" class="panel active">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Type</th>
+              <th>Volume</th>
+              <th>Open Price</th>
+              <th>Current</th>
+              <th>SL / TP</th>
+              <th>Swap</th>
+              <th>Profit</th>
+              <th>Pips</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="positionsBody"></tbody>
+        </table>
+      </div>
+      <div id="positionsEmpty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+        <h3>No Open Positions</h3>
+        <p>Positions will appear here when you have open trades</p>
+      </div>
+    </div>
+
+    <!-- History Panel -->
+    <div id="panel-history" class="panel">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Symbol</th>
+              <th>Type</th>
+              <th>Entry</th>
+              <th>Volume</th>
+              <th>Price</th>
+              <th>Profit</th>
+              <th>Swap</th>
+              <th>Comm.</th>
+              <th>Net</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <div id="historyEmpty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+        <h3>No Trade History</h3>
+        <p>Completed trades will appear here</p>
+      </div>
+    </div>
+
+    <!-- Accounts Panel -->
+    <div id="panel-accounts" class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="font-size:18px;">Linked MT5 Accounts</h2>
+        <button class="btn btn-primary" onclick="openAddAccountModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Account
+        </button>
+      </div>
+      <div id="accountsList" class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Login</th>
+              <th>Server</th>
+              <th>Last Sync</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="accountsBody"></tbody>
+        </table>
+      </div>
+      <div id="accountsEmpty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <h3>No Accounts Linked</h3>
+        <p>Add your first MT5 account to start monitoring</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add Account Modal -->
+<div id="addAccountModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add MT5 Account</h2>
+      <button class="modal-close" onclick="closeModal('addAccountModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="addAccountAlert" class="alert"></div>
+      <form id="addAccountForm" class="account-form">
+        <div class="form-group">
+          <label for="accName">Account Name</label>
+          <input type="text" id="accName" placeholder="e.g., Main Demo" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="accLogin">Login (Account Number)</label>
+            <input type="number" id="accLogin" placeholder="12345678" required>
+          </div>
+          <div class="form-group">
+            <label for="accServer">Server</label>
+            <input type="text" id="accServer" placeholder="MetaQuotes-Demo" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="accPassword">Password</label>
+          <input type="password" id="accPassword" placeholder="MT5 master/investor password" required>
+          <small style="color:var(--text-muted); font-size:11px;">Stored encrypted. Used only for EA configuration.</small>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addAccountModal')">Cancel</button>
+      <button class="btn btn-primary" id="addAccountBtn">Add Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== JavaScript ===== -->
+<script>
+/* ===== CONFIG ===== */
+const API_BASE = '/api';
+let authToken = localStorage.getItem('mt5_token') || '';
+let currentAccountId = null;
+let ws = null;
+let notifDropdownOpen = false;
+
+/* ===== UTIL ===== */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+const fmt = (n, d=2) => n ? Number(n).toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d}) : '0.00';
+const fmtTime = (ts) => ts ? new Date(ts * 1000).toLocaleString() : '—';
+const fmtTimeShort = (ts) => ts ? new Date(ts * 1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—';
+
+function showAlert(elId, msg, type='error') {
+  const el = $(`#${elId}`);
+  el.textContent = msg;
+  el.className = `alert alert-${type}`;
+  el.style.display = 'block';
+}
+function hideAlert(elId) {
+  $(`#${elId}`).style.display = 'none';
+}
+
+function api(path, options={}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers||{}) };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  return fetch(`${API_BASE}${path}`, { ...options, headers })
+    .then(r => r.json().then(data => ({ok:r.ok, status:r.status, data})))
+    .catch(e => ({ok:false, error:e.message}));
+}
+
+/* ===== AUTH ===== */
+async function checkAuth() {
+  if (!authToken) return false;
+  const {ok, data} = await api('/auth/me');
+  if (ok) {
+    showDashboard(data.user);
+    return true;
+  }
+  logout();
+  return false;
+}
+
+async function login(e) {
+  e.preventDefault();
+  hideAlert('loginAlert');
+  const btn = $('#loginBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  
+  const {ok, data, status} = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: $('#loginEmail').value,
+      password: $('#loginPassword').value
+    })
+  });
+  
+  btn.disabled = false; btn.textContent = 'Sign In';
+  
+  if (ok) {
+    authToken = data.token;
+    localStorage.setItem('mt5_token', authToken);
+    showDashboard(data.user);
+  } else {
+    showAlert('loginAlert', data?.error || 'Login failed');
+  }
+}
+
+async function register(e) {
+  e.preventDefault();
+  hideAlert('registerAlert');
+  const btn = $('#registerBtn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+  
+  const password = $('#registerPassword').value;
+  const confirm = $('#registerConfirm').value;
+  if (password !== confirm) {
+    showAlert('registerAlert', 'Passwords do not match');
+    btn.disabled = false; btn.textContent = 'Create Account';
+    return;
+  }
+  
+  const {ok, data} = await api('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: $('#registerEmail').value,
+      password
+    })
+  });
+  
+  btn.disabled = false; btn.textContent = 'Create Account';
+  
+  if (ok) {
+    authToken = data.token;
+    localStorage.setItem('mt5_token', authToken);
+    closeModal('registerModal');
+    showDashboard(data.user);
+  } else {
+    showAlert('registerAlert', data?.error || 'Registration failed');
+  }
+}
+
+function logout() {
+  authToken = '';
+  localStorage.removeItem('mt5_token');
+  $('#dashboard').style.display = 'none';
+  $('#loginPage').style.display = 'flex';
+  if (ws) { ws.close(); ws = null; }
+}
+
+function showDashboard(user) {
+  $('#loginPage').style.display = 'none';
+  $('#dashboard').style.display = 'flex';
+  $('#userEmail').textContent = user.email;
+  $('#userAvatar').textContent = user.email[0].toUpperCase();
+  connectWS();
+  loadAccounts();
+}
+
+/* ===== WEBSOCKET ===== */
+function connectWS() {
+  if (ws) ws.close();
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${protocol}//${location.host}/ws?token=${authToken}`);
+  
+  ws.onopen = () => {
+    updateConnectionStatus(true);
+    console.log('WS connected');
+  };
+  
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      handleWSMessage(msg);
+    } catch (err) { console.error('WS parse error', err); }
+  };
+  
+  ws.onclose = () => {
+    updateConnectionStatus(false);
+    console.log('WS disconnected, reconnecting...');
+    setTimeout(connectWS, 3000);
+  };
+  
+  ws.onerror = (err) => console.error('WS error', err);
+}
+
+function handleWSMessage(msg) {
+  switch (msg.type) {
+    case 'connected': console.log('WS auth ok'); break;
+    case 'notification': addNotification(msg.data); break;
+    case 'position_update': if (msg.accountId === currentAccountId) loadPositions(); break;
+    case 'account_update': if (msg.accountId === currentAccountId) loadAccountStats(); break;
+    default: console.log('Unknown WS msg', msg);
+  }
+}
+
+function updateConnectionStatus(connected) {
+  $('#connectionDot').className = 'connection-dot' + (connected ? ' connected' : '');
+  $('#connectionText').textContent = connected ? 'Connected' : 'Disconnected';
+}
+
+/* ===== ACCOUNTS ===== */
+async function loadAccounts() {
+  const {ok, data} = await api('/accounts');
+  if (!ok) return;
+  
+  const select = $('#accountSelect');
+  select.innerHTML = '<option value="">Select Account</option>';
+  
+  if (data.accounts.length === 0) {
+    $('#accountsEmpty').style.display = 'block';
+    $('#accountsList').style.display = 'none';
+  } else {
+    $('#accountsEmpty').style.display = 'none';
+    $('#accountsList').style.display = 'block';
+    
+    data.accounts.forEach(acc => {
+      const opt = document.createElement('option');
+      opt.value = acc.id;
+      opt.textContent = `${acc.name} (${acc.login})`;
+      select.appendChild(opt);
+    });
+    
+    renderAccountsTable(data.accounts);
+  }
+}
+
+function renderAccountsTable(accounts) {
+  $('#accountsBody').innerHTML = accounts.map(acc => `
+    <tr>
+      <td><strong>${escapeHtml(acc.name)}</strong></td>
+      <td><code>${acc.login}</code></td>
+      <td>${escapeHtml(acc.server)}</td>
+      <td>${acc.last_sync ? fmtTimeShort(acc.last_sync) : 'Never'}</td>
+      <td><span class="badge ${acc.is_active ? 'badge-open' : 'badge-closed'}">${acc.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <button class="btn btn-secondary" onclick="deleteAccount('${acc.id}')" style="padding:4px 10px; font-size:12px;">Remove</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function switchAccount() {
+  const id = $('#accountSelect').value;
+  currentAccountId = id || null;
+  if (id) {
+    loadPositions();
+    loadHistory();
+    loadAccountStats();
+  } else {
+    clearPanels();
+  }
+}
+
+async function loadAccountStats() {
+  if (!currentAccountId) return;
+  const {ok, data} = await api(`/accounts/${currentAccountId}`);
+  if (ok && data.account) {
+    // Could show account details
+  }
+}
+
+async function openAddAccountModal() {
+  closeAllModals();
+  $('#addAccountModal').classList.add('active');
+  $('#accName').focus();
+}
+
+async function addAccount(e) {
+  e.preventDefault();
+  hideAlert('addAccountAlert');
+  const btn = $('#addAccountBtn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  
+  const {ok, data} = await api('/accounts', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: $('#accName').value,
+      login: parseInt($('#accLogin').value),
+      server: $('#accServer').value,
+      password: $('#accPassword').value
+    })
+  });
+  
+  btn.disabled = false; btn.textContent = 'Add Account';
+  
+  if (ok) {
+    closeModal('addAccountModal');
+    $('#addAccountForm').reset();
+    loadAccounts();
+    // Auto-select new account
+    $('#accountSelect').value = data.account.id;
+    switchAccount();
+  } else {
+    showAlert('addAccountAlert', data?.error || 'Failed to add account');
+  }
+}
+
+async function deleteAccount(id) {
+  if (!confirm('Remove this MT5 account? This will delete all its data.')) return;
+  
+  const {ok} = await api(`/accounts/${id}`, { method: 'DELETE' });
+  if (ok) {
+    loadAccounts();
+    if (currentAccountId === id) {
+      currentAccountId = null;
+      $('#accountSelect').value = '';
+      clearPanels();
+    }
+  }
+}
+
+/* ===== POSITIONS ===== */
+async function loadPositions() {
+  if (!currentAccountId) return;
+  const {ok, data} = await api(`/positions/${currentAccountId}`);
+  if (!ok) return;
+  
+  const tbody = $('#positionsBody');
+  const empty = $('#positionsEmpty');
+  
+  if (data.positions.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  tbody.innerHTML = data.positions.map(p => {
+    const isBuy = p.type === 0;
+    const profitClass = p.profit >= 0 ? 'profit-positive' : 'profit-negative';
+    return `
+      <tr>
+        <td class="symbol">${escapeHtml(p.symbol)}</td>
+        <td><span class="badge ${isBuy ? 'type-buy' : 'type-sell'}">${isBuy ? 'BUY' : 'SELL'}</span></td>
+        <td>${fmt(p.volume)}</td>
+        <td>${fmt(p.price_open, 5)}</td>
+        <td>${fmt(p.price_current || p.price_open, 5)}</td>
+        <td>${p.sl ? fmt(p.sl, 5) : '—'} / ${p.tp ? fmt(p.tp, 5) : '—'}</td>
+        <td class="${p.swap >= 0 ? 'profit-positive' : 'profit-negative'}">${fmt(p.swap)}</td>
+        <td class="${profitClass}">${fmt(p.profit)}</td>
+        <td class="${p.pips >= 0 ? 'profit-positive' : 'profit-negative'}">${p.pips.toFixed(1)}</td>
+        <td>${fmtTimeShort(p.time_open)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ===== HISTORY ===== */
+async function loadHistory() {
+  if (!currentAccountId) return;
+  const {ok, data} = await api(`/history/${currentAccountId}?limit=100`);
+  if (!ok) return;
+  
+  const tbody = $('#historyBody');
+  const empty = $('#historyEmpty');
+  
+  if (data.deals.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  tbody.innerHTML = data.deals.map(d => {
+    const isBuy = d.type === 0;
+    const entryStr = d.entry === 0 ? 'IN' : d.entry === 1 ? 'OUT' : 'IN/OUT';
+    const profitClass = d.profit >= 0 ? 'profit-positive' : 'profit-negative';
+    const netProfit = (d.profit||0) + (d.swap||0) + (d.commission||0) + (d.fee||0);
+    return `
+      <tr>
+        <td>${fmtTimeShort(d.time)}</td>
+        <td class="symbol">${escapeHtml(d.symbol)}</td>
+        <td><span class="badge ${isBuy ? 'type-buy' : 'type-sell'}">${isBuy ? 'BUY' : 'SELL'}</span></td>
+        <td><span class="badge badge-pending">${entryStr}</span></td>
+        <td>${fmt(d.volume)}</td>
+        <td>${fmt(d.price, 5)}</td>
+        <td class="${profitClass}">${fmt(d.profit)}</td>
+        <td>${fmt(d.swap)}</td>
+        <td>${fmt(d.commission)}</td>
+        <td class="${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${fmt(netProfit)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ===== NOTIFICATIONS ===== */
+let notifications = [];
+
+async function loadNotifications() {
+  const {ok, data} = await api('/notifications?limit=20');
+  if (!ok) return;
+  notifications = data.notifications;
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const dropdown = $('#notifDropdown');
+  const unread = notifications.filter(n => !n.is_read).length;
+  $('#notifBadge').textContent = unread > 99 ? '99+' : unread;
+  $('#notifBadge').style.display = unread > 0 ? 'flex' : 'none';
+  
+  if (notifications.length === 0) {
+    dropdown.innerHTML = `
+      <div class="notif-header"><strong>Notifications</strong></div>
+      <div class="notif-list"><div style="padding:20px; text-align:center; color:var(--text-secondary);">No notifications</div></div>
+    `;
+    return;
+  }
+  
+  dropdown.innerHTML = `
+    <div class="notif-header">
+      <strong>Notifications</strong>
+      ${unread > 0 ? `<button onclick="markAllRead()" style="font-size:11px; background:none; border:none; color:var(--accent-blue); cursor:pointer;">Mark all read</button>` : ''}
+    </div>
+    <div class="notif-list">
+      ${notifications.slice(0, 10).map(n => `
+        <div class="notif-item ${!n.is_read ? 'unread' : ''}" onclick="markNotificationRead('${n.id}')">
+          <div class="notif-title">${escapeHtml(n.title)}</div>
+          <div class="notif-message">${escapeHtml(n.message)}</div>
+          <div class="notif-time">${fmtTimeShort(n.created_at)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="notif-footer"><button onclick="loadNotifications()">View all</button></div>
+  `;
+}
+
+function toggleNotifications() {
+  notifDropdownOpen = !notifDropdownOpen;
+  $('#notifDropdown').classList.toggle('active', notifDropdownOpen);
+  if (notifDropdownOpen) loadNotifications();
+}
+
+function closeNotifications() {
+  notifDropdownOpen = false;
+  $('#notifDropdown').classList.remove('active');
+}
+
+async function markNotificationRead(id) {
+  await api(`/notifications/${id}/read`, { method: 'PUT' });
+  loadNotifications();
+}
+
+async function markAllRead() {
+  await api('/notifications/read-all', { method: 'PUT' });
+  loadNotifications();
+}
+
+function addNotification(n) {
+  notifications.unshift(n);
+  if (notifications.length > 50) notifications.pop();
+  renderNotifications();
+  // Browser notification
+  if (Notification.permission === 'granted') {
+    new Notification(n.title, { body: n.message, icon: '/favicon.ico' });
+  }
+}
+
+/* ===== MODALS ===== */
+function closeModal(id) {
+  $(`#${id}`).classList.remove('active');
+}
+
+function closeAllModals() {
+  $$('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+/* ===== HELPERS ===== */
+function clearPanels() {
+  $('#positionsBody').innerHTML = '';
+  $('#historyBody').innerHTML = '';
+  $('#positionsEmpty').style.display = 'block';
+  $('#historyEmpty').style.display = 'block';
+  $('#statBalance').textContent = '$0.00';
+  $('#statEquity').textContent = '$0.00';
+  $('#statProfit').textContent = '$0.00';
+  $('#statMargin').textContent = '0%';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]));
+}
+
+/* ===== EVENT LISTENERS ===== */
+$('#loginForm').addEventListener('submit', login);
+$('#registerForm').addEventListener('submit', register);
+$('#addAccountForm').addEventListener('submit', addAccount);
+
+$('#showRegister').addEventListener('click', (e) => {
+  e.preventDefault();
+  closeAllModals();
+  $('#registerModal').classList.add('active');
+  $('#registerEmail').focus();
+});
+
+$$('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.panel').forEach(p => p.classList.remove('active'));
+    $(`#panel-${btn.dataset.tab}`).classList.add('active');
+  });
+});
+
+// Close dropdowns on outside click
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.notification-btn') && !e.target.closest('.notifications-dropdown')) {
+    closeNotifications();
+  }
+  if (!e.target.closest('.user-menu')) {
+    // user menu dropdown if added
+  }
+});
+
+// Request notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+
+/* ===== INIT ===== */
+checkAuth();
+</script>
+</body>
+</html>
